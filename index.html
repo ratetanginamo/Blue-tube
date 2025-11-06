@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BlueTube</title>
-<script src="js/youtube-api.js" defer></script>
-<style>
-body { font-family: Arial; max-width: 900px; margin: auto; padding: 20px; }
-input, button { padding: 8px; margin: 5px; }
-#results div { border-bottom: 1px solid #ccc; padding: 8px 0; }
-#results img { vertical-align: middle; margin-right: 8px; width: 120px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎥 BlueTube Search</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<h1>BlueTube Search</h1>
-<input type="text" id="searchInput" placeholder="Search videos">
-<button id="searchBtn">Search</button>
-<div id="results"></div>
+  <div class="container">
+    <h1>🔵 BlueTube</h1>
+    <input type="text" id="searchInput" placeholder="Search videos..." />
+    <button id="searchBtn">Search</button>
+    <div id="videosContainer"></div>
+  </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const searchBtn = document.getElementById('searchBtn');
-    const searchInput = document.getElementById('searchInput');
-    const resultsDiv = document.getElementById('results');
+  <script src="js/youtube-api.js"></script>
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const videosContainer = document.getElementById("videosContainer");
 
-    searchBtn.addEventListener('click', async () => {
-        const query = searchInput.value.trim();
-        if(!query) return alert("Enter a search query");
-        resultsDiv.innerHTML = "Loading...";
-        try {
-            const videos = await searchVideos(query);
-            if(videos.length === 0) {
-                resultsDiv.innerHTML = "No videos found";
-                return;
-            }
-            resultsDiv.innerHTML = videos.map(v => `
-                <div>
-                    <img src="${v.thumbnail}" alt="${v.title}">
-                    <a href="video.html?id=${v.id}">${v.title}</a>
-                    <p>${v.channelTitle}</p>
-                </div>
-            `).join('');
-        } catch(e) {
-            resultsDiv.innerHTML = "Error: " + e.message;
-        }
-    });
-});
-</script>
+    async function performSearch() {
+      const query = searchInput.value.trim();
+      if (!query) return;
+      const videos = await searchVideos(query);
+      videosContainer.innerHTML = "";
+      if (videos.length === 0) {
+        videosContainer.innerHTML = "<p>No videos found.</p>";
+        return;
+      }
+      videos.forEach(video => {
+        const vid = video.id.videoId;
+        const snippet = video.snippet;
+        const div = document.createElement("div");
+        div.className = "video";
+        div.innerHTML = `
+          <a href="video.html?id=${vid}">
+            <img src="${snippet.thumbnails.medium.url}" alt="${snippet.title}">
+            <h3>${snippet.title}</h3>
+            <p>${snippet.channelTitle}</p>
+          </a>
+        `;
+        videosContainer.appendChild(div);
+      });
+    }
+
+    searchBtn.onclick = performSearch;
+  </script>
 </body>
 </html>

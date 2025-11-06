@@ -4,35 +4,45 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BlueTube</title>
-<link rel="stylesheet" href="style.css">
+<script src="js/youtube-api.js" defer></script>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  input, button { padding: 8px; margin: 5px; }
+  #results div { border-bottom: 1px solid #ccc; padding: 8px 0; }
+</style>
 </head>
 <body>
-<div class="container">
-  <h1>🎥 BlueTube</h1>
-  <input type="text" id="searchInput" placeholder="Search videos..."/>
-  <button onclick="search()">Search</button>
-  <ul id="resultsList"></ul>
-</div>
+<h1>BlueTube Search</h1>
+<input type="text" id="searchInput" placeholder="Search videos">
+<button id="searchBtn">Search</button>
+<div id="results"></div>
 
-<script src="js/youtube-api.js"></script>
 <script>
-async function search(){
-  const query = document.getElementById("searchInput").value.trim();
-  if(!query) return;
-  const resultsList = document.getElementById("resultsList");
-  resultsList.innerHTML="<li>Loading...</li>";
-  try{
-    const videos = await searchVideos(query,10);
-    resultsList.innerHTML="";
-    videos.forEach(v=>{
-      const li = document.createElement("li");
-      li.innerHTML=`<a href="video.html?id=${v.id.videoId}">${v.snippet.title}</a>`;
-      resultsList.appendChild(li);
+document.addEventListener("DOMContentLoaded", () => {
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('searchInput');
+    const resultsDiv = document.getElementById('results');
+
+    searchBtn.addEventListener('click', async () => {
+        const query = searchInput.value.trim();
+        if(!query) return alert("Enter a search query");
+        resultsDiv.innerHTML = "Loading...";
+        try {
+            const videos = await searchVideos(query);
+            if(videos.length === 0) resultsDiv.innerHTML = "No videos found";
+            else {
+                resultsDiv.innerHTML = videos.map(v => `
+                    <div>
+                        <a href="video.html?id=${v.id.videoId}" target="_blank">${v.snippet.title}</a>
+                        <p>${v.snippet.channelTitle}</p>
+                    </div>
+                `).join('');
+            }
+        } catch(e) {
+            resultsDiv.innerHTML = "Error: " + e.message;
+        }
     });
-  }catch(err){
-    resultsList.innerHTML=`<li>Error: ${err.message}</li>`;
-  }
-}
+});
 </script>
 </body>
 </html>

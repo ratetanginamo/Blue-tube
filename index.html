@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlueTube</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>🎥 BlueTube</h1>
+  <input type="text" id="searchInput" placeholder="Search videos..."/>
+  <button onclick="search()">Search</button>
+  <ul id="resultsList"></ul>
+</div>
+
+<script src="js/youtube-api.js"></script>
+<script>
+async function search(){
+  const query = document.getElementById("searchInput").value.trim();
+  if(!query) return;
+  const resultsList = document.getElementById("resultsList");
+  resultsList.innerHTML="<li>Loading...</li>";
+  try{
+    const videos = await searchVideos(query,10);
+    resultsList.innerHTML="";
+    videos.forEach(v=>{
+      const li = document.createElement("li");
+      li.innerHTML=`<a href="video.html?id=${v.id.videoId}">${v.snippet.title}</a>`;
+      resultsList.appendChild(li);
+    });
+  }catch(err){
+    resultsList.innerHTML=`<li>Error: ${err.message}</li>`;
+  }
+}
+</script>
+</body>
+</html>

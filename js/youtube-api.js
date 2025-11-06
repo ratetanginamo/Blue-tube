@@ -1,39 +1,37 @@
 // js/youtube-api.js
 const API_BASE = "http://127.0.0.1:3000/api";
 
-/**
- * Fetch a single video by ID
- */
-async function fetchVideoById(videoId){
+// Fetch a single video by ID
+async function fetchVideoById(videoId) {
     const res = await fetch(`${API_BASE}/video/${videoId}`);
     const data = await res.json();
     if(data.error) throw new Error(data.error);
     return data;
 }
 
-/**
- * Search videos by query
- * Requires backend /api/search endpoint
- */
-async function searchVideos(query, maxResults = 10){
+// Search videos by query
+async function searchVideos(query, maxResults = 10) {
     const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}&maxResults=${maxResults}`);
     const data = await res.json();
-    if(data.error) throw new Error(data.error);
-    return data.items || [];
+    if (!data.items) return [];
+    // Map to unified structure
+    return data.items.map(item => ({
+        id: item.id.videoId,
+        title: item.snippet.title,
+        channelTitle: item.snippet.channelTitle,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails?.medium?.url || ""
+    }));
 }
 
-/**
- * Format numbers like 1500 → 1.5K, 2300000 → 2.3M
- */
+// Format numbers like 1.2K, 3.5M
 function formatNumber(num){
-    if(num >= 1e6) return (num/1e6).toFixed(1) + "M";
-    if(num >= 1e3) return (num/1e3).toFixed(1) + "K";
+    if(num>=1e6) return (num/1e6).toFixed(1)+"M";
+    if(num>=1e3) return (num/1e3).toFixed(1)+"K";
     return num.toString();
 }
 
-/**
- * Persistent video state
- */
+// Persistent state helpers
 async function getVideoState(videoId){
     const res = await fetch(`${API_BASE}/videoState/${videoId}`);
     return res.json();
@@ -48,12 +46,9 @@ async function saveVideoState(videoId, state){
     return res.json();
 }
 
-/**
- * Make functions globally accessible
- */
+// Make globally accessible
 window.fetchVideoById = fetchVideoById;
 window.searchVideos = searchVideos;
 window.formatNumber = formatNumber;
 window.getVideoState = getVideoState;
 window.saveVideoState = saveVideoState;
-  

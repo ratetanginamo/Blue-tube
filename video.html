@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlueTube Video</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>BlueTube Video</h1>
+  <div id="videoContainer"><p>Loading video...</p></div>
+  <a href="index.html">⬅ Back to Home</a>
+</div>
+
+<script src="js/youtube-api.js"></script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const videoId = urlParams.get("id");
+let currentUser = {id:1}; // Replace with login system
+
+async function loadVideo(){
+  if(!videoId) return;
+  try{
+    const video = await fetchVideoById(videoId);
+    const snippet = video.snippet;
+    const stats = video.statistics;
+    document.getElementById("videoContainer").innerHTML = `
+      <iframe width="100%" height="400" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>
+      <h2>${snippet.title}</h2>
+      <div>📺 ${snippet.channelTitle} | 👁️ ${formatNumber(stats.viewCount||0)} views | 👍 ${formatNumber(stats.likeCount||0)}</div>
+      <p>${snippet.description.replace(/\n/g,'<br>')}</p>
+    `;
+  }catch(err){
+    document.getElementById("videoContainer").innerHTML = `<p>Error: ${err.message}</p>`;
+  }
+}
+
+loadVideo();
+</script>
+</body>
+</html>

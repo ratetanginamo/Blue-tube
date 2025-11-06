@@ -1,103 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BlueTube Video</title>
-<script src="js/youtube-api.js" defer></script>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; }
-  iframe { width: 100%; height: 400px; border: none; margin-bottom: 10px; }
-  h2 { color: #1e90ff; }
-  button { padding: 6px 12px; margin-right: 5px; cursor: pointer; }
-  textarea { width: 100%; height: 80px; margin-top: 10px; padding: 8px; }
-  #commentsList div { border-top: 1px solid #ccc; padding: 6px 0; }
-  .active { background-color: #1e90ff; color: white; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlueTube Video</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div id="videoContainer">Loading video...</div>
+  <div class="container">
+    <div id="videoPlayer"></div>
+    <h2 id="videoTitle"></h2>
+    <p id="channelTitle"></p>
+    <button id="likeBtn">👍 Like (<span id="likeCount">0</span>)</button>
+    <button id="subBtn">🔔 Subscribe</button>
 
-<h3>Interact</h3>
-<button id="likeBtn">👍 Like</button>
-<button id="subscribeBtn">🔔 Subscribe</button>
+    <h3>💬 Comments</h3>
+    <input type="text" id="commentInput" placeholder="Add a comment..." />
+    <button id="commentBtn">Post</button>
+    <div id="commentsContainer"></div>
+  </div>
 
-<h3>Comments</h3>
-<textarea id="commentInput" placeholder="Write a comment..."></textarea><br>
-<button id="postCommentBtn">Post Comment</button>
-<div id="commentsList"></div>
+  <script src="js/youtube-api.js"></script>
+  <script>
+    const videoId = new URLSearchParams(window.location.search).get("id");
 
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoId = urlParams.get("id");
-    if(!videoId) {
-        document.getElementById("videoContainer").innerHTML = "❌ No video ID provided";
-        return;
-    }
-
-    const container = document.getElementById("videoContainer");
+    const videoTitle = document.getElementById("videoTitle");
+    const channelTitle = document.getElementById("channelTitle");
+    const videoPlayer = document.getElementById("videoPlayer");
     const likeBtn = document.getElementById("likeBtn");
-    const subscribeBtn = document.getElementById("subscribeBtn");
+    const likeCount = document.getElementById("likeCount");
+    const subBtn = document.getElementById("subBtn");
     const commentInput = document.getElementById("commentInput");
-    const postCommentBtn = document.getElementById("postCommentBtn");
-    const commentsList = document.getElementById("commentsList");
+    const commentBtn = document.getElementById("commentBtn");
+    const commentsContainer = document.getElementById("commentsContainer");
 
-    // Load video info and state
-    let video, state;
-    try {
-        video = await fetchVideoById(videoId);
-        state = await getVideoState(videoId);
-    } catch(e) {
-        container.innerHTML = "Error: " + e.message;
-        return;
+    // Persistent data
+    let likes = parseInt(localStorage.getItem(`likes_${videoId}`)) || 0;
+    let subscribed = localStorage.getItem("subscribed") === "true";
+    let comments = JSON.parse(localStorage.getItem(`comments_${videoId}`) || "[]");
+
+    likeCount.textContent = likes;
+    subBtn.textContent = subscribed ? "✅ Subscribed" : "🔔 Subscribe";
+
+    // Load video details
+    async function loadVideo() {
+      const video = await fetchVideoById(videoId);
+      videoTitle.textContent = video.snippet.title;
+      channelTitle.textContent = video.snippet.channelTitle;
+      videoPlayer.innerHTML = `
+        <iframe width="100%" height="315" 
+          src="https://www.youtube.com/embed/${videoId}" 
+          frameborder="0" allowfullscreen></iframe>`;
     }
-
-    container.innerHTML = `
-        <iframe src="https://www.youtube.com/embed/${video.id}" allowfullscreen></iframe>
-        <h2>${video.title}</h2>
-        <p>${video.description}</p>
-        <p>Channel: ${video.channelTitle}</p>
-    `;
-
-    // Initialize buttons and comments
-    let likes = state.liked || 0;
-    let subscribed = state.subscribed || 0;
-    let comments = state.comments ? JSON.parse(state.comments) : [];
-
-    function updateUI() {
-        likeBtn.textContent = `👍 Like (${formatNumber(likes)})`;
-        subscribeBtn.textContent = subscribed ? "🔔 Subscribed" : "🔔 Subscribe";
-        subscribeBtn.classList.toggle("active", subscribed);
-        commentsList.innerHTML = comments.map(c => `<div>${c}</div>`).join("");
-    }
-
-    updateUI();
 
     // Like button
-    likeBtn.addEventListener("click", async () => {
-        likes++;
-        await saveVideoState(videoId, { likes, subscribed, comments: JSON.stringify(comments) });
-        updateUI();
-    });
+    likeBtn.onclick = () => {
+      likes++;
+      localStorage.setItem(`likes_${videoId}`, likes);
+      likeCount.textContent = likes;
+    };
 
     // Subscribe button
-    subscribeBtn.addEventListener("click", async () => {
-        subscribed = subscribed ? 0 : 1;
-        await saveVideoState(videoId, { likes, subscribed, comments: JSON.stringify(comments) });
-        updateUI();
-    });
+    subBtn.onclick = () => {
+      subscribed = !subscribed;
+      localStorage.setItem("subscribed", subscribed);
+      subBtn.textContent = subscribed ? "✅ Subscribed" : "🔔 Subscribe";
+    };
 
-    // Post comment
-    postCommentBtn.addEventListener("click", async () => {
-        const text = commentInput.value.trim();
-        if(!text) return;
-        comments.push(text);
-        commentInput.value = "";
-        await saveVideoState(videoId, { likes, subscribed, comments: JSON.stringify(comments) });
-        updateUI();
-    });
-});
-</script>
+    // Comments
+    function renderComments() {
+      commentsContainer.innerHTML = comments.map(c => `<p>🗨️ ${c}</p>`).join("");
+    }
+
+    commentBtn.onclick = () => {
+      const text = commentInput.value.trim();
+      if (!text) return;
+      comments.push(text);
+      localStorage.setItem(`comments_${videoId}`, JSON.stringify(comments));
+      commentInput.value = "";
+      renderComments();
+    };
+
+    renderComments();
+    loadVideo();
+  </script>
 </body>
 </html>

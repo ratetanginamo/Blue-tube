@@ -1,5 +1,5 @@
 // js/youtube-api.js
-const API_BASE = "http://YOUR_TERMUX_IP:3000/api";
+const API_BASE = "http://127.0.0.1:3000/api";
 
 async function fetchVideoById(videoId){
   const res = await fetch(`${API_BASE}/video/${videoId}`);

@@ -6,9 +6,10 @@
 <title>BlueTube</title>
 <script src="js/youtube-api.js" defer></script>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  input, button { padding: 8px; margin: 5px; }
-  #results div { border-bottom: 1px solid #ccc; padding: 8px 0; }
+body { font-family: Arial; max-width: 900px; margin: auto; padding: 20px; }
+input, button { padding: 8px; margin: 5px; }
+#results div { border-bottom: 1px solid #ccc; padding: 8px 0; }
+#results img { vertical-align: middle; margin-right: 8px; width: 120px; }
 </style>
 </head>
 <body>
@@ -29,15 +30,17 @@ document.addEventListener("DOMContentLoaded", () => {
         resultsDiv.innerHTML = "Loading...";
         try {
             const videos = await searchVideos(query);
-            if(videos.length === 0) resultsDiv.innerHTML = "No videos found";
-            else {
-                resultsDiv.innerHTML = videos.map(v => `
-                    <div>
-                        <a href="video.html?id=${v.id.videoId}" target="_blank">${v.snippet.title}</a>
-                        <p>${v.snippet.channelTitle}</p>
-                    </div>
-                `).join('');
+            if(videos.length === 0) {
+                resultsDiv.innerHTML = "No videos found";
+                return;
             }
+            resultsDiv.innerHTML = videos.map(v => `
+                <div>
+                    <img src="${v.thumbnail}" alt="${v.title}">
+                    <a href="video.html?id=${v.id}">${v.title}</a>
+                    <p>${v.channelTitle}</p>
+                </div>
+            `).join('');
         } catch(e) {
             resultsDiv.innerHTML = "Error: " + e.message;
         }
